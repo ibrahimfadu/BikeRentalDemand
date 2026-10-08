@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<indexing>
+ <paragraph index="9" node_type="writer">Forecasting Bike Rental Demand Using Tree-Based Models</paragraph>
+ <paragraph index="10" node_type="writer">Course: UE24CS352A — Machine Learning</paragraph>
+ <paragraph index="11" node_type="writer">Team Members: Ibrahim Khaleel, Dheeraj</paragraph>
+ <paragraph index="12" node_type="writer">SRN: PES2UG25CS809,  PES2UG25CS806</paragraph>
+ <paragraph index="13" node_type="writer">Date: October 2026</paragraph>
+ <paragraph index="15" node_type="writer">1. Problem Statement</paragraph>
+ <paragraph index="16" node_type="writer">Bike-sharing systems such as Washington D.C.'s Capital Bikeshare require accurate demand forecasts to manage bike availability, storage, and relocation costs. Our goal is to predict the hourly count of bike rentals using historical rental data, weather conditions, and calendar information. The evaluation metric is Root Mean Squared Logarithmic Error (RMSLE):</paragraph>
+ <paragraph index="17" node_type="writer">RMSLE=n1​∑i=1n​(log(pi​+1)−log(ai​+1))^2​</paragraph>
+ <paragraph index="18" node_type="writer">where pi​ is the predicted count, ai​ is the actual count, and n is the number of observations. Lower RMSLE indicates better predictions. RMSLE penalizes under-predictions more heavily than over-predictions, which is appropriate for demand forecasting where stockouts are costlier than surplus. The log transformation also handles the wide range of rental counts (1 to ~977 rentals/hour) without over-weighting high-count hours.</paragraph>
+ <paragraph index="20" node_type="writer">2. Dataset Details</paragraph>
+ <paragraph index="21" node_type="writer">We used the Kaggle Bike Sharing Demand dataset, derived from the Capital Bikeshare program in Washington D.C. spanning 2011–2012.</paragraph>
+ <paragraph index="22" node_type="writer">Training set: 10,886 hourly observations</paragraph>
+ <paragraph index="23" node_type="writer">Test set: 6,493 hourly observations</paragraph>
+ <paragraph index="24" node_type="writer">Original features (12): datetime, season, holiday, workingday, weather, temp, atemp (feels-like temperature), humidity, windspeed, casual, registered, count</paragraph>
+ <paragraph index="25" node_type="writer">Target variable: count (sum of casual + registered rentals)</paragraph>
+ <paragraph index="26" node_type="writer">Feature type breakdown:</paragraph>
+ <paragraph index="27" node_type="writer">Categorical: season, holiday, workingday, weather</paragraph>
+ <paragraph index="28" node_type="writer">Continuous: temp, atemp, humidity, windspeed</paragraph>
+ <paragraph index="29" node_type="writer">Datetime string: converted into month, dayofweek, hour</paragraph>
+ <paragraph index="31" node_type="writer">3. Approach</paragraph>
+ <paragraph index="32" node_type="writer">Our methodology followed three stages: feature engineering, model selection, and evaluation.</paragraph>
+ <paragraph index="33" node_type="writer">3.1 Feature Engineering</paragraph>
+ <paragraph index="34" node_type="writer">Based on insights from Du, He, and Zhechev (2014), we applied the following transformations:</paragraph>
+ <paragraph index="35" node_type="writer">Datetime decomposition: Split datetime into month, dayofweek, and hour, isolating the time-of-day signal.</paragraph>
+ <paragraph index="36" node_type="writer">Peak-hour indicator: Created a binary peak_hour feature:</paragraph>
+ <paragraph index="37" node_type="writer">Weekdays (Mon–Fri): 7–9 AM and 5–7 PM</paragraph>
+ <paragraph index="38" node_type="writer">Weekends (Sat–Sun): 10 AM – 6 PM</paragraph>
+ <paragraph index="39" node_type="writer">Feature removal: Dropped holiday (no predictive signal per the paper) and temp (highly correlated with atemp, causing collinearity).</paragraph>
+ <paragraph index="40" node_type="writer">3.2 Models Evaluated</paragraph>
+ <paragraph index="41" node_type="writer">We trained and 10-fold cross-validated eight models across four categories:</paragraph>
+ <object index="42" name="Table1" object_type="table"/>
+ <paragraph index="44" node_type="writer" parent_index="42">Category</paragraph>
+ <paragraph index="47" node_type="writer" parent_index="42">Models</paragraph>
+ <paragraph index="50" node_type="writer" parent_index="42">Linear</paragraph>
+ <paragraph index="53" node_type="writer" parent_index="42">Linear Regression, GLMNet (Elastic Net), PCR</paragraph>
+ <paragraph index="56" node_type="writer" parent_index="42">Kernel</paragraph>
+ <paragraph index="59" node_type="writer" parent_index="42">SVR (RBF kernel)</paragraph>
+ <paragraph index="62" node_type="writer" parent_index="42">Tree-based</paragraph>
+ <paragraph index="65" node_type="writer" parent_index="42">Random Forest, GBM, CTree*</paragraph>
+ <paragraph index="68" node_type="writer" parent_index="42">Ensemble</paragraph>
+ <paragraph index="71" node_type="writer" parent_index="42">Stacking (RF + CTree → Linear meta)</paragraph>
+ <paragraph index="74" node_type="writer">CTree was approximated using scikit-learn's DecisionTreeRegressor, as the exact Conditional Inference Tree algorithm is available only in R's party package.</paragraph>
+ <paragraph index="75" node_type="writer">3.3 Additional Experiment</paragraph>
+ <paragraph index="76" node_type="writer">Following the reference paper, we also attempted split regression — training separate models on registered and casual counts and summing predictions — to test whether the two user groups respond differently to features.</paragraph>
+ <paragraph index="78" node_type="writer">4. Implementation Overview</paragraph>
+ <paragraph index="79" node_type="writer">The project was implemented in Python using pandas, numpy, and scikit-learn. The pipeline:</paragraph>
+ <paragraph index="80" node_type="writer">Load train.csv and test.csv</paragraph>
+ <paragraph index="81" node_type="writer">Apply feature engineering (decompose datetime, add peak-hour flag, drop unhelpful features)</paragraph>
+ <paragraph index="82" node_type="writer">Train each of the 8 models using 10-fold cross-validation</paragraph>
+ <paragraph index="83" node_type="writer">Compute mean CV RMSLE for each model</paragraph>
+ <paragraph index="84" node_type="writer">Select the best model, retrain on the full training set</paragraph>
+ <paragraph index="85" node_type="writer">Predict on the test set and save submission.csv</paragraph>
+ <paragraph index="86" node_type="writer">Visualize feature importances and model comparison</paragraph>
+ <paragraph index="87" node_type="writer">The RMSLE metric was implemented manually:</paragraph>
+ <paragraph index="88" node_type="writer">python</paragraph>
+ <paragraph index="89" node_type="writer">def rmsle(y_true, y_pred):</paragraph>
+ <paragraph index="90" node_type="writer">    y_pred = np.maximum(y_pred, 0)</paragraph>
+ <paragraph index="91" node_type="writer">    return np.sqrt(np.mean((np.log1p(y_pred) - np.log1p(y_true)) ** 2))</paragraph>
+ <paragraph index="93" node_type="writer">5. Results</paragraph>
+ <object index="94" name="Table2" object_type="table"/>
+ <paragraph index="96" node_type="writer" parent_index="94">Model</paragraph>
+ <paragraph index="99" node_type="writer" parent_index="94">10-Fold CV RMSLE</paragraph>
+ <paragraph index="102" node_type="writer" parent_index="94">Split Regression (reg + cas)</paragraph>
+ <paragraph index="105" node_type="writer" parent_index="94">0.3928</paragraph>
+ <paragraph index="108" node_type="writer" parent_index="94">Random Forest</paragraph>
+ <paragraph index="111" node_type="writer" parent_index="94">0.3985</paragraph>
+ <paragraph index="114" node_type="writer" parent_index="94">CTree (DecisionTree substitute)</paragraph>
+ <paragraph index="117" node_type="writer" parent_index="94">0.4469</paragraph>
+ <paragraph index="120" node_type="writer" parent_index="94">GBM (Gradient Boosting)</paragraph>
+ <paragraph index="123" node_type="writer" parent_index="94">0.5016</paragraph>
+ <paragraph index="126" node_type="writer" parent_index="94">Stacking Ensemble</paragraph>
+ <paragraph index="129" node_type="writer" parent_index="94">0.5624</paragraph>
+ <paragraph index="132" node_type="writer" parent_index="94">SVR (RBF kernel)</paragraph>
+ <paragraph index="135" node_type="writer" parent_index="94">0.8452</paragraph>
+ <paragraph index="138" node_type="writer" parent_index="94">GLMNet (Elastic Net)</paragraph>
+ <paragraph index="141" node_type="writer" parent_index="94">1.1629</paragraph>
+ <paragraph index="144" node_type="writer" parent_index="94">PCR</paragraph>
+ <paragraph index="147" node_type="writer" parent_index="94">1.1817</paragraph>
+ <paragraph index="150" node_type="writer" parent_index="94">Linear Regression</paragraph>
+ <paragraph index="153" node_type="writer" parent_index="94">1.1855</paragraph>
+ <paragraph index="156" node_type="writer">Key findings:</paragraph>
+ <paragraph index="157" node_type="writer">Tree-based models dominated. Split regression and Random Forest achieved the lowest CV RMSLE (0.3928 and 0.3985 respectively). The gap between them is within cross-validation noise, so they are effectively equivalent.</paragraph>
+ <paragraph index="158" node_type="writer">Time-of-day is the dominant signal. Feature importance analysis showed peak_hour (0.42) and hour (0.22) account for ~64% of the model's decision-making.</paragraph>
+ <paragraph index="159" node_type="writer">Weather plays a secondary role. atemp (0.14) and humidity (0.07) contribute meaningfully but are less predictive than time-of-day.</paragraph>
+ <paragraph index="160" node_type="writer">Linear models failed. Bike demand is highly non-linear (e.g., hour 8 AM ≠ 8× hour 1 AM), which linear models cannot capture. All three linear variants (Linear, PCR, GLMNet) had RMSLE &gt; 1.16.</paragraph>
+ <paragraph index="161" node_type="writer">Stacking underperformed. Our base models (RF + CTree) were both tree-based, so they made similar errors. Stacking works best with diverse base models.</paragraph>
+ <paragraph index="162" node_type="writer">Split regression performed well. It slightly edged out direct count regression, though the difference is negligible. This contrasts with the reference paper, where split regression performed noticeably worse.</paragraph>
+ <paragraph index="164" node_type="writer">6. Conclusions</paragraph>
+ <paragraph index="165" node_type="writer">Tree-based models, particularly Random Forest and split regression, significantly outperformed linear and kernel approaches for this problem. Our best models achieved a CV RMSLE of 0.3928, beating the reference paper's benchmark of 0.503. The most predictive feature was peak_hour, followed by hour and atemp — confirming that time-of-day patterns are the dominant driver of bike rental demand, with weather conditions playing a secondary but non-trivial role.</paragraph>
+ <paragraph index="166" node_type="writer">Limitations and Future Work:</paragraph>
+ <paragraph index="167" node_type="writer">The 10-fold CV uses shuffled data, which mixes past and future observations. A time-series split would better reflect real-world deployment.</paragraph>
+ <paragraph index="168" node_type="writer">True CTree (via R's party package) may yield slightly different results than our DecisionTree substitute.</paragraph>
+ <paragraph index="169" node_type="writer">GLMNet with Poisson loss (rather than Gaussian) could improve the regularized linear model, since our target is a count variable.</paragraph>
+ <paragraph index="170" node_type="writer">Hyperparameter tuning for GBM could close the gap with Random Forest.</paragraph>
+ <paragraph index="172" node_type="writer">7. References</paragraph>
+ <paragraph index="173" node_type="writer">Du, J., He, R., &amp; Zhechev, Z. (2014). Forecasting Bike Rental Demand.</paragraph>
+ <paragraph index="174" node_type="writer">Friedman, J., Hastie, T., &amp; Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate descent. Journal of Statistical Software, 33(1).</paragraph>
+ <paragraph index="175" node_type="writer">Liaw, A., &amp; Wiener, M. (2002). Classification and regression by randomForest. R News, 2(3).</paragraph>
+ <paragraph index="176" node_type="writer">Hothorn, T., &amp; Zeileis, A. (2006). Unbiased recursive partitioning: A conditional inference framework. Journal of Computational and Graphical Statistics, 15(3).</paragraph>
+ <paragraph index="177" node_type="writer">Kaggle. Bike Sharing Demand. https://www.kaggle.com/c/bike-sharing-demand</paragraph>
+</indexing>
