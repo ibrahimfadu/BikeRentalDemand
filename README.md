@@ -5,7 +5,8 @@ A machine learning project that predicts hourly bike rental counts for the Capit
 **Course:** UE24CS352A — Machine Learning Mini Project   
 **Name:** Ibrahim khaleel,Dheeraj S    
 **SRN:** PES2UG25CS809,PES2UG25CS806    
-**Team No:** 87.    
+**Team No:** 29.   
+**Project No:** 87.
 
 ---
 
